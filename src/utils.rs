@@ -1,8 +1,8 @@
+use core::num::NonZero;
 use esp_idf_svc::hal::{
     gpio::{Input, InputPin, InterruptType, PinDriver},
     task::notification::Notification,
 };
-use std::num::NonZero;
 
 /// block until the desired interrupt occurs on the given pin
 #[inline]

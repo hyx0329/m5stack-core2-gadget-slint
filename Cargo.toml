@@ -30,7 +30,7 @@ embassy = ["esp-idf-svc/embassy-sync", "esp-idf-svc/critical-section", "esp-idf-
 [dependencies]
 log = { version = "0.4", default-features = false }
 esp-idf-svc = { version = "0.49", default-features = false }
-axp2101 = { version = "0.1.0", path = "../axp2101-rs" }
+axp2101 = { version = "0.2.0", path = "../axp2101-rs" }
 pcf8563 = { version = "0.1.0", path = "../pcf8563-rs" }
 ft6336 = { version = "0.1.0", path = "../ft6336-rs" }
 mpu6886 = { version = "0.1.0", path = "../mpu6886-rs" }

@@ -1,8 +1,3 @@
-use embedded_graphics_core::{
-    pixelcolor::raw::RawU16,
-    prelude::{DrawTarget, Point, Size},
-    primitives::Rectangle,
-};
 use esp_idf_svc::hal::{
     delay::{Ets as EtsDelay, FreeRtos as FreeRtosDelay},
     gpio::{PinDriver, Pull},
@@ -26,7 +21,7 @@ use mipidsi::{
     Builder as MipiBuilder,
 };
 
-use axp2101::{Aldo2, Axp2101, Bldo1, Dcdc1};
+use axp2101::{Aldo2, Axp2101, Bldo1, Dcdc1, Regulator as _, RegulatorPin};
 use ft6336::Ft6336;
 use ina3221::Ina3221;
 use mpu6886::Mpu6886;
@@ -37,7 +32,7 @@ mod utils;
 
 use utils::block_for_interrupt;
 
-use platform::{M5Core2V11GadgetPlatform, DisplayWrapper};
+use platform::{DisplayWrapper, M5Core2V11GadgetPlatform};
 use slint::platform::software_renderer::MinimalSoftwareWindow;
 
 slint::include_modules!();
@@ -81,7 +76,7 @@ fn main() {
         dcdc3.enable().unwrap();
     };
 
-    // Initialize SPI
+    // Initialize SPI, allocated at runtime
     let spi_bus = {
         let spi_sdo = peripherals.pins.gpio23;
         let spi_sdi = peripherals.pins.gpio38;
@@ -112,7 +107,8 @@ fn main() {
         let lcd_cs = peripherals.pins.gpio5;
         let display_spi_bus =
             spi::SpiDeviceDriver::new(spi_bus, Some(lcd_cs), &display_spi_config).unwrap();
-        let lcd_rst = Aldo2::new(SharedI2cBus::new(mutex_i2c_bus));
+        let aldo2 = Aldo2::new(SharedI2cBus::new(mutex_i2c_bus));
+        let lcd_rst = RegulatorPin::new(aldo2);
         let lcd_dc = PinDriver::output(peripherals.pins.gpio15).unwrap();
         let display_interface = SPIInterface::new(display_spi_bus, lcd_dc);
         MipiBuilder::new(ILI9342CRgb565, display_interface)
@@ -148,16 +144,14 @@ fn main() {
     window.set_size(slint::PhysicalSize::new(320, 240));
 
     // UI configuration
+    // This is merely an app view, different from the window.
     let main_window = GadgetMainWindow::new().unwrap();
 
     // The event loop(super loop)
     log::info!("Starting super loop...");
     loop {
         window.draw_if_needed(|renderer| {
-            renderer.render_by_line(DisplayWrapper::new(
-                &mut display,
-                &mut line_buffer,
-            ));
+            renderer.render_by_line(DisplayWrapper::new(&mut display, &mut line_buffer));
         });
 
         // spare time for other services

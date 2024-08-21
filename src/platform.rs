@@ -1,4 +1,8 @@
-use embedded_graphics_core::{pixelcolor::raw::RawU16, prelude::{DrawTarget, Point, Size}, primitives::Rectangle};
+use embedded_graphics_core::{
+    pixelcolor::raw::RawU16,
+    prelude::{DrawTarget, Point, Size},
+    primitives::Rectangle,
+};
 use slint::platform::{software_renderer, software_renderer::MinimalSoftwareWindow, Platform};
 use std::{rc::Rc, time};
 
@@ -52,7 +56,7 @@ impl<'a, T> DisplayWrapper<'a, T> {
 
 impl<T> software_renderer::LineBufferProvider for DisplayWrapper<'_, T>
 where
-    T: DrawTarget<Color = embedded_graphics_core::pixelcolor::Rgb565>
+    T: DrawTarget<Color = embedded_graphics_core::pixelcolor::Rgb565>,
 {
     type TargetPixel = software_renderer::Rgb565Pixel;
     fn process_line(
