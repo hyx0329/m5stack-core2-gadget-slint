@@ -6,7 +6,10 @@ jobs = 8
 [target.xtensa-esp32-espidf]
 linker = "ldproxy"
 runner = "espflash flash --monitor" # Select this runner for espflash v3.x.x
-rustflags = [ "--cfg",  "espidf_time64"] # Extending time_t for ESP IDF 5: https://github.com/esp-rs/rust/issues/110
+rustflags = [
+    # Extending time_t for ESP IDF 5: https://github.com/esp-rs/rust/issues/110
+    "--cfg",  "espidf_time64",
+]
 
 [unstable]
 build-std = ["std", "panic_abort"]
