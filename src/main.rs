@@ -176,8 +176,13 @@ fn main() {
     // The event loop(super loop)
     log::info!("Starting super loop...");
     loop {
+        slint::platform::update_timers_and_animations();
+
         for event in inputevent_rx.try_iter() {
-            log::info!("InputEvent: {:?}", event);
+            match event {
+                InputEvent::WindowEvent(event) => window.dispatch_event(event),
+                InputEvent::Pmu(event) => todo!(),
+            }
         }
 
         window.draw_if_needed(|renderer| {

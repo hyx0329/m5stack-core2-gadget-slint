@@ -140,20 +140,25 @@ where
                 {
                     *last_known_status = false; // don't forget marking it as inactive
 
-                    let release_event = if pointer_index == Some(i as u8) {
-                        // release pointer
+                    if pointer_index == Some(i as u8) {
+                        // release pointer event
                         pointer_index = None; // also clear pointer_index, required if N > 2
                         let position = LogicalPosition::new(
                             last_position[i].0 as f32,
                             last_position[i].1 as f32,
                         );
-                        WindowEvent::PointerReleased {
+                        let release_event = WindowEvent::PointerReleased {
                             position,
                             button: PointerEventButton::Left,
-                        }
+                        };
+                        sender.send(InputEvent::WindowEvent(release_event)).unwrap();
+                        // this is required for hover effects to work properly
+                        sender
+                            .send(InputEvent::WindowEvent(WindowEvent::PointerExited))
+                            .unwrap();
                     } else {
                         // release key
-                        if (0..107).contains(&last_position[i].0) {
+                        let release_event = if (0..107).contains(&last_position[i].0) {
                             WindowEvent::KeyReleased {
                                 text: SharedString::from(TOUCH_BTN_LEFT),
                             }
@@ -165,9 +170,9 @@ where
                             WindowEvent::KeyReleased {
                                 text: SharedString::from(TOUCH_BTN_RIGHT),
                             }
-                        }
+                        };
+                        sender.send(InputEvent::WindowEvent(release_event)).unwrap();
                     };
-                    sender.send(InputEvent::WindowEvent(release_event)).unwrap();
                 }
 
                 // wait for touch panel's update
