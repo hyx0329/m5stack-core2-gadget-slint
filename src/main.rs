@@ -1,9 +1,10 @@
 use esp_idf_svc::hal::{
     delay::{Ets as EtsDelay, FreeRtos as FreeRtosDelay},
-    gpio::{PinDriver, Pull},
+    gpio::{InterruptType, PinDriver, Pull},
     i2c,
     peripherals::Peripherals,
     spi,
+    task::block_on,
     units::FromValueType as _,
 };
 use std::{
@@ -29,13 +30,22 @@ use pcf8563::Pcf8563;
 
 mod platform;
 mod utils;
+// TODOs
+mod applejuice;
+mod inputevent;
 
+use inputevent::{
+    tasks::{pmu_event_task, touch_event_task},
+    InputEvent, Point as TouchPoint, PointState,
+};
 use utils::block_for_interrupt;
 
 use platform::{DisplayWrapper, M5Core2V11GadgetPlatform};
 use slint::platform::software_renderer::MinimalSoftwareWindow;
 
 slint::include_modules!();
+
+const INPUT_BUFFER_SIZE: usize = 32;
 
 fn main() {
     esp_idf_svc::sys::link_patches();
@@ -56,7 +66,7 @@ fn main() {
     // all built-in I2C devices
     let mut pmu = Axp2101::new(SharedI2cBus::new(mutex_i2c_bus));
     let mut rtc = Pcf8563::new(SharedI2cBus::new(mutex_i2c_bus));
-    let mut touch = Ft6336::new(SharedI2cBus::new(mutex_i2c_bus));
+    let mut touch_panel = Ft6336::new(SharedI2cBus::new(mutex_i2c_bus));
     let mut inertial = Mpu6886::new(SharedI2cBus::new(mutex_i2c_bus));
     let mut voltmon = Ina3221::new(SharedI2cBus::new(mutex_i2c_bus));
 
@@ -127,6 +137,22 @@ fn main() {
     lcd_backlight.set_voltage(2800).unwrap();
     lcd_backlight.enable().unwrap();
 
+    log::info!("Initializing input sources...");
+
+    // communication channel / event queue
+    let (inputevent_tx, inputevent_rx) = mpsc::sync_channel::<InputEvent>(INPUT_BUFFER_SIZE);
+    let inputevent_tx_pmu = inputevent_tx.clone();
+    let inputevent_tx_touch = inputevent_tx;
+
+    // thread for reading PMU events
+    let mut pmu_interrupt = PinDriver::input(peripherals.pins.gpio19).unwrap();
+    pmu_interrupt.set_pull(Pull::Up).unwrap();
+    let _t_input_pmu = pmu_event_task(pmu, pmu_interrupt, inputevent_tx_pmu);
+
+    // thread for reading touch events
+    let touch_interrupt = PinDriver::input(peripherals.pins.gpio39).unwrap();
+    let _t_input_touch = touch_event_task(touch_panel, touch_interrupt, inputevent_tx_touch);
+
     log::info!("Initializing slint...");
 
     // slint init
@@ -145,7 +171,7 @@ fn main() {
 
     // UI configuration
     // This is merely an app view, different from the window.
-    let main_window = GadgetMainWindow::new().unwrap();
+    let app_ui = GadgetMainWindow::new().unwrap();
 
     // The event loop(super loop)
     log::info!("Starting super loop...");
@@ -156,6 +182,6 @@ fn main() {
 
         // spare time for other services
         // so watchdog will be fed
-        thread::sleep(Duration::from_millis(10));
+        FreeRtosDelay::delay_ms(20);
     }
 }

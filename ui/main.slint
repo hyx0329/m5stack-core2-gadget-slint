@@ -1,6 +1,23 @@
+import { CheckBox } from "std-widgets.slint";
 export component GadgetMainWindow inherits Window {
-    Text {
-        text: "hello world";
-        color: green;
+    width: 320px;
+    height: 240px;
+
+    out property <bool> test-enabled <=> activation-input.enabled;
+
+    VerticalLayout {
+        Text {
+            text: "测试装置#1";
+            font-size: 30px;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            vertical-alignment: TextVerticalAlignment.center;
+        }
+
+        HorizontalLayout {
+            alignment: LayoutAlignment.center;
+            activation-input := CheckBox {
+                text: "启动";
+            }
+        }
     }
 }
