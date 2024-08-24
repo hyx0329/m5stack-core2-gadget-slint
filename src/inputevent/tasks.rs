@@ -13,9 +13,9 @@ use crate::utils::block_for_interrupt;
 
 use super::InputEvent;
 
-const TOUCH_BTN_LEFT: &str = "touch_btn_left";
-const TOUCH_BTN_CENTER: &str = "touch_btn_center";
-const TOUCH_BTN_RIGHT: &str = "touch_btn_right";
+const TOUCH_BTN_LEFT: slint::platform::Key = slint::platform::Key::F1;
+const TOUCH_BTN_CENTER: slint::platform::Key = slint::platform::Key::F2;
+const TOUCH_BTN_RIGHT: slint::platform::Key = slint::platform::Key::F3;
 
 /// The thread for touch events processing.
 #[inline]
@@ -114,15 +114,15 @@ where
                             // 320px sliced to 3 buttons
                             let new_key_event = if (0..107).contains(&point.x) {
                                 WindowEvent::KeyPressed {
-                                    text: SharedString::from(TOUCH_BTN_LEFT),
+                                    text: TOUCH_BTN_LEFT.into(),
                                 }
                             } else if (107..214).contains(&point.x) {
                                 WindowEvent::KeyPressed {
-                                    text: SharedString::from(TOUCH_BTN_CENTER),
+                                    text: TOUCH_BTN_CENTER.into(),
                                 }
                             } else {
                                 WindowEvent::KeyPressed {
-                                    text: SharedString::from(TOUCH_BTN_RIGHT),
+                                    text: TOUCH_BTN_RIGHT.into(),
                                 }
                             };
 
@@ -160,15 +160,15 @@ where
                         // release key
                         let release_event = if (0..107).contains(&last_position[i].0) {
                             WindowEvent::KeyReleased {
-                                text: SharedString::from(TOUCH_BTN_LEFT),
+                                text: TOUCH_BTN_LEFT.into(),
                             }
                         } else if (107..214).contains(&last_position[i].0) {
                             WindowEvent::KeyReleased {
-                                text: SharedString::from(TOUCH_BTN_CENTER),
+                                text: TOUCH_BTN_CENTER.into(),
                             }
                         } else {
                             WindowEvent::KeyReleased {
-                                text: SharedString::from(TOUCH_BTN_RIGHT),
+                                text: TOUCH_BTN_RIGHT.into(),
                             }
                         };
                         sender.send(InputEvent::WindowEvent(release_event)).unwrap();
