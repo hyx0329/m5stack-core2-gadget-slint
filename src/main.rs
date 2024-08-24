@@ -176,6 +176,10 @@ fn main() {
     // The event loop(super loop)
     log::info!("Starting super loop...");
     loop {
+        for event in inputevent_rx.try_iter() {
+            log::info!("InputEvent: {:?}", event);
+        }
+
         window.draw_if_needed(|renderer| {
             renderer.render_by_line(DisplayWrapper::new(&mut display, &mut line_buffer));
         });
