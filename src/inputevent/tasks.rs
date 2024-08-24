@@ -172,7 +172,7 @@ where
                             }
                         };
                         sender.send(InputEvent::WindowEvent(release_event)).unwrap();
-                    };
+                    }
                 }
 
                 // wait for touch panel's update
