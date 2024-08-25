@@ -7,7 +7,7 @@ use esp_idf_svc::hal::delay::FreeRtos as FreeRtosDelay;
 use esp_idf_svc::hal::gpio::{Input, InputPin, InterruptType, PinDriver};
 use ft6336::Ft6336;
 use slint::platform::{PointerEventButton, WindowEvent};
-use slint::{LogicalPosition, SharedString};
+use slint::LogicalPosition;
 
 use crate::utils::block_for_interrupt;
 
