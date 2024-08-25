@@ -1,22 +1,53 @@
-import { CheckBox } from "std-widgets.slint";
+import { CheckBox, Slider } from "std-widgets.slint";
 export component GadgetMainWindow inherits Window {
     width: 320px;
     height: 240px;
 
     out property <bool> test-enabled <=> activation-input.enabled;
 
-    VerticalLayout {
-        Text {
-            text: "测试装置#1";
-            font-size: 30px;
-            horizontal-alignment: TextHorizontalAlignment.center;
-            vertical-alignment: TextVerticalAlignment.center;
+    root-focus := FocusScope {
+
+        // TODO: move this to rust
+        init => { self.focus() }
+
+        key-pressed(event) => {
+            debug(event.text);
+            if (event.text == Key.F1) {
+                main-window-title.text = "F1 pressed"
+            }
+            if (event.text == Key.F2) {
+                main-window-title.text = "F2 pressed"
+            }
+            if (event.text == Key.F3) {
+                main-window-title.text = "OO EE OO"
+            }
+            accept
         }
 
-        HorizontalLayout {
-            alignment: LayoutAlignment.center;
-            activation-input := CheckBox {
-                text: "启动";
+        VerticalLayout {
+            main-window-title := Text {
+                text: "测试装置#1";
+                font-size: 30px;
+                horizontal-alignment: TextHorizontalAlignment.center;
+                vertical-alignment: TextVerticalAlignment.center;
+            }
+
+            HorizontalLayout {
+                alignment: center;
+                Slider {
+                    width: parent.width * 0.75;
+                    minimum: 0;
+                    value: 5;
+                    maximum: 10;
+                }
+            }
+
+
+            HorizontalLayout {
+                alignment: LayoutAlignment.center;
+                activation-input := CheckBox {
+                    text: "启动";
+                }
             }
         }
     }
