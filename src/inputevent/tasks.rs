@@ -179,16 +179,16 @@ where
                     }
                 }
 
+                // check if actually no new event
+                if processed.into_iter().all(|x| !x) {
+                    // into interrupt mode, skip the delay
+                    break;
+                }
+
                 // wait for touch panel's update
                 // default update interval is approx. 19ms
                 // always keep this delay to avoid triggering WDT
-                FreeRtosDelay::delay_ms(20);
-
-                // check if actually no new event
-                if processed.into_iter().all(|x| !x) {
-                    // into interrupt mode
-                    break;
-                }
+                FreeRtosDelay::delay_ms(10);
             }
         }
     })
