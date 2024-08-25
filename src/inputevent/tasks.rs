@@ -16,6 +16,7 @@ use super::InputEvent;
 const TOUCH_BTN_LEFT: slint::platform::Key = slint::platform::Key::F1;
 const TOUCH_BTN_CENTER: slint::platform::Key = slint::platform::Key::F2;
 const TOUCH_BTN_RIGHT: slint::platform::Key = slint::platform::Key::F3;
+const TOUCH_POINT_COUNT_MAXIMUM: usize = 2;
 
 /// The thread for touch events processing.
 #[inline]
@@ -50,15 +51,18 @@ where
 
             // when interrupt triggered, enter polling mode, until all released.
             // maximum 2 touches, and is also ensured by touch driver
-            let mut last_status: [bool; 2] = [false; 2]; // track last pressing status
-            let mut last_position: [(u16, u16); 2] = [(0, 0); 2]; // track last position, used when point released
-            let mut pointer_index: Option<u8> = None; // track which point is for gestures
+            let mut last_status: [bool; TOUCH_POINT_COUNT_MAXIMUM] =
+                [false; TOUCH_POINT_COUNT_MAXIMUM]; // track last pressing status
+            let mut last_position: [(u16, u16); TOUCH_POINT_COUNT_MAXIMUM] =
+                [(0, 0); TOUCH_POINT_COUNT_MAXIMUM]; // track last position, used when point released
+            let mut pointer_index: Option<u8> = None; // track which point is for gestures/pointer
 
             loop {
                 let points_iter = touch_panel.touch_points_iter().unwrap();
 
                 // track point ids processed
-                let mut processed: [bool; 2] = [false; 2];
+                let mut processed: [bool; TOUCH_POINT_COUNT_MAXIMUM] =
+                    [false; TOUCH_POINT_COUNT_MAXIMUM];
 
                 // all points in this iter are actively touched points,
                 // this behavior is consistent with touch panel's firmware.
