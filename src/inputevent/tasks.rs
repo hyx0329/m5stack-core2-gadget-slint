@@ -188,7 +188,7 @@ where
                 // wait for touch panel's update
                 // default update interval is approx. 19ms
                 // always keep this delay to avoid triggering WDT
-                FreeRtosDelay::delay_ms(10);
+                FreeRtosDelay::delay_ms(20);
             }
         }
     })
