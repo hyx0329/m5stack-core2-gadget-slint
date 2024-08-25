@@ -33,10 +33,6 @@ impl Platform for M5Core2V11GadgetPlatform {
         let the_beginning = *INITIAL_INSTANT.get_or_init(time::Instant::now);
         time::Instant::now() - the_beginning
     }
-
-    fn run_event_loop(&self) -> Result<(), slint::PlatformError> {
-        todo!()
-    }
 }
 
 // simple display wrapper from the official example

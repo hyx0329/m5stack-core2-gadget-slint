@@ -1,10 +1,9 @@
 use esp_idf_svc::hal::{
     delay::{Ets as EtsDelay, FreeRtos as FreeRtosDelay},
-    gpio::{InterruptType, PinDriver, Pull},
+    gpio::{PinDriver, Pull},
     i2c,
     peripherals::Peripherals,
     spi,
-    task::block_on,
     units::FromValueType as _,
 };
 use std::{
@@ -36,9 +35,8 @@ mod inputevent;
 
 use inputevent::{
     tasks::{pmu_event_task, touch_event_task},
-    InputEvent, Point as TouchPoint, PointState,
+    InputEvent,
 };
-use utils::block_for_interrupt;
 
 use platform::{DisplayWrapper, M5Core2V11GadgetPlatform};
 use slint::platform::software_renderer::MinimalSoftwareWindow;
@@ -164,14 +162,13 @@ fn main() {
     }))
     .unwrap();
 
-    // this is a valid configuration order
     // prepare buffer and configure root window size
     let mut line_buffer = [slint::platform::software_renderer::Rgb565Pixel(0); 320];
     window.set_size(slint::PhysicalSize::new(320, 240));
 
     // UI configuration
     // This is merely an app view, different from the window.
-    let app_ui = GadgetMainWindow::new().unwrap();
+    let _app_ui = GadgetMainWindow::new().unwrap();
 
     // The event loop(super loop)
     log::info!("Starting super loop...");
@@ -181,7 +178,7 @@ fn main() {
         for event in inputevent_rx.try_iter() {
             match event {
                 InputEvent::WindowEvent(event) => window.dispatch_event(event),
-                InputEvent::Pmu(event) => todo!(),
+                InputEvent::Pmu(event) => log::info!("PMU event: {:?}", event),
             }
         }
 
