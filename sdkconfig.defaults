@@ -10,13 +10,22 @@ CONFIG_ESP_MAIN_TASK_STACK_SIZE=8000
 #CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=n
 
 # Enable external PSRAM without high-mem support
-# the values are arbitrary
+# Unfortunately RAM space exceeding 4MB cannot be directly integrated in ESP32 chips
+CONFIG_SPIRAM=y
+#CONFIG_SPIRAM_TYPE_AUTO=y
+#CONFIG_SPIRAM_SPEED_40M=y
 CONFIG_SPIRAM_BOOT_INIT=y
 CONFIG_SPIRAM_IGNORE_NOTFOUND=y
 CONFIG_SPIRAM_USE_MALLOC=y
 CONFIG_SPIRAM_MEMTEST=y
+# The values are arbitrary
 CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
 CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=32768
+# further tweaks, the workaround is not required on m5core2v11 which has V3 chip
+CONFIG_SPIRAM_CACHE_WORKAROUND=n
+# don't use it for the moment, will cause severe psram fragmentation
+# read: https://github.com/espressif/esp-idf/issues/11753
+#CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
 
 # Enable and use BT with nimble stack.
 CONFIG_BT_ENABLED=y

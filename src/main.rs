@@ -135,6 +135,11 @@ fn main() {
     lcd_backlight.set_voltage(2800).unwrap();
     lcd_backlight.enable().unwrap();
 
+    let psram_initialized: bool = unsafe { esp_idf_svc::sys::esp_psram_is_initialized() };
+    log::info!("PSRAM initialized: {}", psram_initialized);
+    let psram_size: usize = unsafe { esp_idf_svc::sys::heap_caps_get_free_size(esp_idf_svc::sys::MALLOC_CAP_SPIRAM) };
+    log::info!("Available PSRAM size(approx.): {}KB", psram_size / 1024);
+
     log::info!("Initializing input sources...");
 
     // communication channel / event queue
@@ -188,6 +193,14 @@ fn main() {
 
         // spare time for other services
         // so watchdog will be fed
-        FreeRtosDelay::delay_ms(20);
+        if window.has_active_animations() {
+            // has active animation, but it's still required to spare some time for other idle tasks
+            // lets say a minimum of 10ms(at 100Hz kernel tick frequency)
+            FreeRtosDelay::delay_ms(10);
+        } else {
+            // no active animation, reduce refresh rate
+            // here the slint timer is not considered, because the main loop model is based on polling
+            FreeRtosDelay::delay_ms(50);
+        }
     }
 }
