@@ -216,13 +216,24 @@ fn main() {
                 InputEvent::WindowEvent(event) => if !lock_screen {window.dispatch_event(event);},
                 InputEvent::Pmu(event) => {
                     log::info!("PMU event: {:?}", event);
-                    if event == IrqReason::PowerKeyEventShort {
-                        lock_screen = !lock_screen;
-                        if !lock_screen {
-                            lcd_backlight.enable().unwrap();
-                        } else {
-                            lcd_backlight.disable().unwrap();
-                        }
+                    match event {
+                        IrqReason::PowerKeyEventShort => {
+                            lock_screen = !lock_screen;
+                            if !lock_screen {
+                                lcd_backlight.enable().unwrap();
+                            } else {
+                                lcd_backlight.disable().unwrap();
+                            }
+                        },
+                        IrqReason::BatteryPercentWarnLevel2 => {
+                            // low power alert
+                            Axp2101::new(SharedI2cBus::new(mutex_i2c_bus)).set_chgled_manually(ChargeLedPattern::OneHertz).unwrap();
+                        },
+                        IrqReason::BatteryPercentWarnLevel1 => {
+                            // shutdown
+                            Axp2101::new(SharedI2cBus::new(mutex_i2c_bus)).power_off().unwrap();
+                        },
+                        _ => {},
                     };
                 },
             }
