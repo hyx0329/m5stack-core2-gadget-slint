@@ -1,52 +1,109 @@
-import { CheckBox, Slider } from "std-widgets.slint";
+import { Slider, GridBox, VerticalBox, Button } from "std-widgets.slint";
+
 export component GadgetMainWindow inherits Window {
     width: 320px;
     height: 240px;
 
-    out property <bool> test-enabled <=> activation-input.enabled;
+    pure callback enable-jammer();
+    pure callback disable-jammer();
+    pure callback shutdown();
+    pure callback update-brightness(float);
+    pure callback update-transmission-power(float);
 
     root-focus := FocusScope {
+        // height: parent.height * 0.9;
+        // width: parent.width * 0.8;
 
         // TODO: move this to rust
         init => { self.focus() }
 
         key-pressed(event) => {
             debug(event.text);
-            if (event.text == Key.F1) {
-                main-window-title.text = "F1 pressed"
-            }
-            if (event.text == Key.F2) {
-                main-window-title.text = "F2 pressed"
-            }
-            if (event.text == Key.F3) {
-                main-window-title.text = "OO EE OO"
-            }
             accept
         }
 
-        VerticalLayout {
+        VerticalBox {
             main-window-title := Text {
-                text: "测试装置#1";
+                text: "待机模式";
                 font-size: 30px;
-                horizontal-alignment: TextHorizontalAlignment.center;
-                vertical-alignment: TextVerticalAlignment.center;
+                horizontal-alignment: center;
+                vertical-alignment: center;
             }
 
-            HorizontalLayout {
-                alignment: center;
-                Slider {
-                    width: parent.width * 0.75;
-                    minimum: 0;
-                    value: 5;
-                    maximum: 10;
+            GridBox {
+                Row {
+                    Text {
+                        text: "亮度";
+                        font-size: 20px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+    
+                    Slider {
+                        minimum: 0;
+                        value: 2;
+                        maximum: 4;
+
+                        changed(brightness) => {
+                            root.update-brightness(brightness);
+                        }
+                    }
+                }
+
+                Row {
+                    Text {
+                        text: "功率";
+                        font-size: 20px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+    
+                    Slider {
+                        minimum: 0;
+                        value: 7;
+                        maximum: 7;
+
+                        released(power) => {
+                            root.update-transmission-power(power);
+                        }
+                    }
                 }
             }
 
+            GridBox {
+                Row {
+                    activate-button := Button {
+                        text: "启动";
+                        clicked => {
+                            root.enable-jammer();
+                            main-window-title.text = "运行中";
+                        }
+                    }
+    
+                    stop-button := Button {
+                        text: "停止";
+                        clicked => {
+                            root.disable-jammer();
+                            main-window-title.text = "待机模式";
+                        }
+                    }
+                }
 
-            HorizontalLayout {
-                alignment: LayoutAlignment.center;
-                activation-input := CheckBox {
-                    text: "启动";
+                Row {
+                    Button {
+                        property <int> counter: 0;
+                        text: "按我";
+                        clicked => {
+                            self.counter += 1;
+                            self.text = self.counter;
+                        }
+                    }
+                    poweroff-button := Button {
+                        text: "关机";
+                        clicked => {
+                            root.shutdown();
+                        }
+                    }
                 }
             }
         }

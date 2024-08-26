@@ -21,7 +21,7 @@ use mipidsi::{
     Builder as MipiBuilder,
 };
 
-use axp2101::{Aldo2, Axp2101, Bldo1, Dcdc1, Regulator as _, RegulatorPin};
+use axp2101::{irq::IrqReason, Aldo2, Axp2101, Bldo1, ChargeLedControl, ChargeLedPattern, Dcdc1, Regulator as _, RegulatorPin};
 use ft6336::Ft6336;
 use ina3221::Ina3221;
 use mpu6886::Mpu6886;
@@ -37,6 +37,7 @@ use inputevent::{
     tasks::{pmu_event_task, touch_event_task},
     InputEvent,
 };
+use applejuice::{JuicyTaskControl, spawn_applejuice_task};
 
 use platform::{DisplayWrapper, M5Core2V11GadgetPlatform};
 use slint::platform::software_renderer::MinimalSoftwareWindow;
@@ -82,6 +83,10 @@ fn main() {
         let mut dcdc3 = Dcdc1::new(SharedI2cBus::new(mutex_i2c_bus));
         dcdc3.set_voltage(3300).unwrap();
         dcdc3.enable().unwrap();
+        // turn on led
+        pmu.set_chgled_control(ChargeLedControl::Manual).unwrap();
+        pmu.set_chgled_en(true).unwrap();
+        pmu.set_chgled_manually(ChargeLedPattern::Low).unwrap();
     };
 
     // Initialize SPI, allocated at runtime
@@ -156,6 +161,10 @@ fn main() {
     let touch_interrupt = PinDriver::input(peripherals.pins.gpio39).unwrap();
     let _t_input_touch = touch_event_task(touch_panel, touch_interrupt, inputevent_tx_touch);
 
+    log::info!("Initializing (evil) apple juice...");
+    FreeRtosDelay::delay_ms(10);
+    let juicy_control = spawn_applejuice_task();
+
     log::info!("Initializing slint...");
 
     // slint init
@@ -173,7 +182,29 @@ fn main() {
 
     // UI configuration
     // This is merely an app view, different from the window.
-    let _app_ui = GadgetMainWindow::new().unwrap();
+    let app_ui = GadgetMainWindow::new().unwrap();
+    app_ui.on_shutdown(|| {
+        Axp2101::new(SharedI2cBus::new(mutex_i2c_bus)).power_off().unwrap();
+    });
+    app_ui.on_update_brightness(|brightness|{
+        let level = (brightness as u16) % 5;
+        let voltage = 2600 + level * 100;
+        Bldo1::new(SharedI2cBus::new(mutex_i2c_bus)).set_voltage(voltage).unwrap();
+    });
+    let juicy_enable = juicy_control.clone();
+    let juicy_disable = juicy_control.clone();
+    app_ui.on_enable_jammer(move ||{
+        juicy_enable.send(JuicyTaskControl::Start).unwrap();
+    });
+    app_ui.on_disable_jammer(move ||{
+        juicy_disable.send(JuicyTaskControl::Stop).unwrap();
+    });
+    app_ui.on_update_transmission_power(move |value| {
+        juicy_control.send(JuicyTaskControl::SetPower(value as u8)).unwrap();
+    });
+
+    // some state variables
+    let mut lock_screen = false;
 
     // The event loop(super loop)
     log::info!("Starting super loop...");
@@ -182,8 +213,18 @@ fn main() {
 
         for event in inputevent_rx.try_iter() {
             match event {
-                InputEvent::WindowEvent(event) => window.dispatch_event(event),
-                InputEvent::Pmu(event) => log::info!("PMU event: {:?}", event),
+                InputEvent::WindowEvent(event) => if !lock_screen {window.dispatch_event(event);},
+                InputEvent::Pmu(event) => {
+                    log::info!("PMU event: {:?}", event);
+                    if event == IrqReason::PowerKeyEventShort {
+                        lock_screen = !lock_screen;
+                        if !lock_screen {
+                            lcd_backlight.enable().unwrap();
+                        } else {
+                            lcd_backlight.disable().unwrap();
+                        }
+                    };
+                },
             }
         }
 
