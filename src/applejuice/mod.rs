@@ -3,5 +3,5 @@
 mod devices;
 mod task;
 
-pub use task::JuicyTaskControl;
 pub use task::spawn_applejuice_task;
+pub use task::JuicyTaskControl;

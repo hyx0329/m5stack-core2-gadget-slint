@@ -21,7 +21,10 @@ use mipidsi::{
     Builder as MipiBuilder,
 };
 
-use axp2101::{irq::IrqReason, Aldo2, Axp2101, Bldo1, ChargeLedControl, ChargeLedPattern, Dcdc1, Regulator as _, RegulatorPin};
+use axp2101::{
+    irq::IrqReason, Aldo2, Axp2101, Bldo1, ChargeLedControl, ChargeLedPattern, Dcdc1,
+    Regulator as _, RegulatorPin,
+};
 use ft6336::Ft6336;
 use ina3221::Ina3221;
 use mpu6886::Mpu6886;
@@ -33,11 +36,11 @@ mod utils;
 mod applejuice;
 mod inputevent;
 
+use applejuice::{spawn_applejuice_task, JuicyTaskControl};
 use inputevent::{
     tasks::{pmu_event_task, touch_event_task},
     InputEvent,
 };
-use applejuice::{JuicyTaskControl, spawn_applejuice_task};
 
 use platform::{DisplayWrapper, M5Core2V11GadgetPlatform};
 use slint::platform::software_renderer::MinimalSoftwareWindow;
@@ -142,7 +145,8 @@ fn main() {
 
     let psram_initialized: bool = unsafe { esp_idf_svc::sys::esp_psram_is_initialized() };
     log::info!("PSRAM initialized: {}", psram_initialized);
-    let psram_size: usize = unsafe { esp_idf_svc::sys::heap_caps_get_free_size(esp_idf_svc::sys::MALLOC_CAP_SPIRAM) };
+    let psram_size: usize =
+        unsafe { esp_idf_svc::sys::heap_caps_get_free_size(esp_idf_svc::sys::MALLOC_CAP_SPIRAM) };
     log::info!("Available PSRAM size(approx.): {}KB", psram_size / 1024);
 
     log::info!("Initializing input sources...");
@@ -184,23 +188,29 @@ fn main() {
     // This is merely an app view, different from the window.
     let app_ui = GadgetMainWindow::new().unwrap();
     app_ui.on_shutdown(|| {
-        Axp2101::new(SharedI2cBus::new(mutex_i2c_bus)).power_off().unwrap();
+        Axp2101::new(SharedI2cBus::new(mutex_i2c_bus))
+            .power_off()
+            .unwrap();
     });
-    app_ui.on_update_brightness(|brightness|{
+    app_ui.on_update_brightness(|brightness| {
         let level = (brightness as u16) % 5;
         let voltage = 2600 + level * 100;
-        Bldo1::new(SharedI2cBus::new(mutex_i2c_bus)).set_voltage(voltage).unwrap();
+        Bldo1::new(SharedI2cBus::new(mutex_i2c_bus))
+            .set_voltage(voltage)
+            .unwrap();
     });
     let juicy_enable = juicy_control.clone();
     let juicy_disable = juicy_control.clone();
-    app_ui.on_enable_jammer(move ||{
+    app_ui.on_enable_jammer(move || {
         juicy_enable.send(JuicyTaskControl::Start).unwrap();
     });
-    app_ui.on_disable_jammer(move ||{
+    app_ui.on_disable_jammer(move || {
         juicy_disable.send(JuicyTaskControl::Stop).unwrap();
     });
     app_ui.on_update_transmission_power(move |value| {
-        juicy_control.send(JuicyTaskControl::SetPower(value as u8)).unwrap();
+        juicy_control
+            .send(JuicyTaskControl::SetPower(value as u8))
+            .unwrap();
     });
 
     // some state variables
@@ -213,7 +223,11 @@ fn main() {
 
         for event in inputevent_rx.try_iter() {
             match event {
-                InputEvent::WindowEvent(event) => if !lock_screen {window.dispatch_event(event);},
+                InputEvent::WindowEvent(event) => {
+                    if !lock_screen {
+                        window.dispatch_event(event);
+                    }
+                }
                 InputEvent::Pmu(event) => {
                     log::info!("PMU event: {:?}", event);
                     match event {
@@ -224,18 +238,22 @@ fn main() {
                             } else {
                                 lcd_backlight.disable().unwrap();
                             }
-                        },
+                        }
                         IrqReason::BatteryPercentWarnLevel2 => {
                             // low power alert
-                            Axp2101::new(SharedI2cBus::new(mutex_i2c_bus)).set_chgled_manually(ChargeLedPattern::OneHertz).unwrap();
-                        },
+                            Axp2101::new(SharedI2cBus::new(mutex_i2c_bus))
+                                .set_chgled_manually(ChargeLedPattern::OneHertz)
+                                .unwrap();
+                        }
                         IrqReason::BatteryPercentWarnLevel1 => {
                             // shutdown
-                            Axp2101::new(SharedI2cBus::new(mutex_i2c_bus)).power_off().unwrap();
-                        },
-                        _ => {},
+                            Axp2101::new(SharedI2cBus::new(mutex_i2c_bus))
+                                .power_off()
+                                .unwrap();
+                        }
+                        _ => {}
                     };
-                },
+                }
             }
         }
 
