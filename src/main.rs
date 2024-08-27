@@ -9,8 +9,6 @@ use esp_idf_svc::hal::{
 use std::{
     boxed::Box,
     sync::{mpsc, Mutex},
-    thread,
-    time::Duration,
 };
 
 use display_interface_spi::SPIInterface;
@@ -49,6 +47,7 @@ slint::include_modules!();
 
 const INPUT_BUFFER_SIZE: usize = 32;
 
+#[allow(unused_mut, unused_variables)]
 fn main() {
     esp_idf_svc::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
