@@ -1,7 +1,7 @@
 [package]
 name = "m5core2-gadget"
 version = "0.1.0"
-authors = ["hyx0329 <hyx0329@163.com>"]
+authors = ["hyx0329 <hyx0329@outlook.com>"]
 edition = "2021"
 resolver = "2"
 rust-version = "1.77"
