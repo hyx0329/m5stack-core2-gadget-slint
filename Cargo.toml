@@ -5,6 +5,7 @@ authors = ["hyx0329 <hyx0329@outlook.com>"]
 edition = "2021"
 resolver = "2"
 rust-version = "1.77"
+license = "AGPL-3.0-only"
 
 [[bin]]
 name = "m5core2-gadget"
